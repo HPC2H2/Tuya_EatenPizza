@@ -97,6 +97,7 @@ B -->|4. 推送通知| A
 ## 🛠 开发说明
 
 ### 目录结构
+```
 ├── firmware/          # AICore 板固件（C/C++）
 │   ├── main.c
 │   ├── tuya_dp_handler.c
@@ -108,6 +109,7 @@ B -->|4. 推送通知| A
 │   └── puzzle_layout.json   # 布局配置（1~9块坐标）
 ├── assets/            # 示例图片、演示视频
 └── README.md
+```
 
 ### 编译依赖
 - 涂鸦 TuyaOpen
