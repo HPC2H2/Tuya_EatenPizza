@@ -107,7 +107,7 @@ B -->|4. 推送通知| A
 
 ### 目录结构
 ```
-├── growth_puzzle/          # AICore 板固件（C/C++）
+├── eaten-pizza/          # AICore 板固件（C/C++）
 │   ├── main.c
 │   ├── tuya_dp_handler.c
 │   └── eink_driver/
@@ -115,7 +115,7 @@ B -->|4. 推送通知| A
 │       └── partial_refresh.c
 ├── app-utils/         # App 辅助工具（Python/JS）
 │   ├── image_processor.py   # 图片裁剪 & 分割
-│   └── puzzle_layout.json   # 布局配置（1~9块坐标）
+│   └── pizza_layout.json   # 布局配置（1~9块坐标）
 ├── assets/            # 示例图片、演示视频
 └── README.md          # 项目说明
 ```
@@ -130,7 +130,7 @@ B -->|4. 推送通知| A
 2. 进入apps，克隆本项目
    ```bash
    cd apps
-   git clone https://github.com/HPC2H2/Tuya-GrowthPuzzle.git
+   git clone https://github.com/HPC2H2/Tuya_EatenPizza.git
    ```
 3. 在TuyaOpen的目录打开Powershell，激活tos环境（自动安装编译、烧录所需pip库）
    ```bash
@@ -139,7 +139,7 @@ B -->|4. 推送通知| A
    ```
 4. 进入本项目目录，编译固件
    ```bash
-   cd .\apps\Tuya-GrowthPuzzle\growth_puzzle
+   cd .\apps\Tuya_EatenPizza\eaten-pizza
    tos.py build
    ```
 5. 连上涂鸦T5板子烧录固件
