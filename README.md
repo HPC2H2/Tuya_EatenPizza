@@ -1,10 +1,9 @@
-# 🧩 Tuya Growth Puzzle — 涂鸦生长拼图计时器
+# 🧩 Tuya Eaten Pizza — 拼好时
 
-> **时间不是被消耗，而是被一块一块地“拼合”完整。**  
-> 基于涂鸦 AICore 开发板 + 圆形彩色墨水屏的低干扰专注计时器，支持自定义图片与时间节奏，让专注变得可见、可感、可珍藏。
+> **让时间像披萨一样，一块块被吃掉。**  
 
 ![Demo](./assets/demo.jpg)  
-*（示意图：墨水屏逐块点亮拼图 + 手机 App 设置界面）*
+*（示意图：墨水屏逐块去除图块 + 手机 App 设置界面）*
 
 ---
 
@@ -12,15 +11,14 @@
 
 - ✅ **双参数自由设置**（手机 App）：
   - 总时长：15 ~ 135 分钟
-  - 时间步长：1 ~ 15 分钟（每过多久点亮一块拼图）
+  - 时间步长：1 ~ 15 分钟（每过多久消失一块拼图）
 - ✅ **智能拼图生成**：
   - 拼图块数 = `总时长 ÷ 步长`，**最大 9 块**
-  - 超限时自动优化步长，确保体验流畅
 - ✅ **个性化图像支持**：
-  - 内置多套主题（森林 / 星空 / 电路）
-  - **支持用户上传任意图片**，自动裁剪为正方形并分割
+  - 内置多套主题（ 披萨 / 星空 / 初音未来 ）
+  - **支持用户上传任意图片**，自动裁剪为*圆形*并分割
 - ✅ **墨水屏友好设计**：
-  - 每步仅**局刷新增拼图块**（<1s），避免 10s 全刷
+  - 每步仅**局刷去除拼图块**（<2s），避免 20s 全刷
   - 残影抑制 + 圆形布局优化
 - ✅ **涂鸦 IoT 全链路集成**：
   - App → 云端 → 设备指令下发
@@ -38,9 +36,20 @@
 | 彩色墨水屏 | GDEH0169E01 | 400×400 分辨率，6 色，圆形显示 |
 | FPC 排线 | FPC-169E01 | 30Pin 排线，连接屏幕与转接板 |
 | SPI 转接板 | DESPI-C169 | 集成驱动芯片，支持 SPI 接口通信 |
-| 主控开发板 | 涂鸦 AICore Wi-Fi SoC 开发板 | 提供 WiFi、MCU、Tuya SDK 支持 |
+| 主控开发板 | 涂鸦 T5 AICore 开发板 | 提供 WiFi、MCU、Tuya SDK 支持 |
 
-> ⚠️ 注意：GDEH0169E01 屏幕需搭配 DESPI-C169 转接板才能正常工作，FPC 为必选连接线。
+> ⚠️ 注意：GDEH0169E01 屏幕需搭配 DESPI-C169 转接板才能正常工作，FPC 为必选连接线。电源接口为 3.3V 直流，请勿接入 5V 电源。还需要杜邦线、USB 数据线（烧录程序用）。
+
+---
+
+## 环境搭建
+  1. Python 3.8 ~ python3.11（3.12及以上不支持，因为移除了distutils库。本工程版本：Python 3.11.9）
+  2.  Ninja v1.10+, Make v3.0+, Git v2.0+，CMake v3.0+
+  3. 由于涂鸦官方编译脚本里用的“python3”，而windows里只有“python.exe",所以需要在python的安装目录中用CMD运行以下指令：
+```bash
+mklink python3.exe python.exe
+```
+该指令为 python3.exe <<===>> python.exe 创建符号链接。
 
 ---
 
@@ -98,7 +107,7 @@ B -->|4. 推送通知| A
 
 ### 目录结构
 ```
-├── firmware/          # AICore 板固件（C/C++）
+├── growth_puzzle/          # AICore 板固件（C/C++）
 │   ├── main.c
 │   ├── tuya_dp_handler.c
 │   └── eink_driver/
@@ -108,14 +117,37 @@ B -->|4. 推送通知| A
 │   ├── image_processor.py   # 图片裁剪 & 分割
 │   └── puzzle_layout.json   # 布局配置（1~9块坐标）
 ├── assets/            # 示例图片、演示视频
-└── README.md
+└── README.md          # 项目说明
 ```
 
-### 编译依赖
-- 涂鸦 TuyaOpen
-- GCC ARM Embedded Toolchain
-- Python 3.8+（用于图片预处理）
+### 快速上手（以Windows为例）
+1. 克隆TuyaOpen
+   ```bash
 
+   git clone https://github.com/tuya/TuyaOpen.git
+
+   ```
+2. 进入apps，克隆本项目
+   ```bash
+   cd apps
+   git clone https://github.com/HPC2H2/Tuya-GrowthPuzzle.git
+   ```
+3. 在TuyaOpen的目录打开Powershell，激活tos环境（自动安装编译、烧录所需pip库）
+   ```bash
+   .\export.bat
+
+   ```
+4. 进入本项目目录，编译固件
+   ```bash
+   cd .\apps\Tuya-GrowthPuzzle\growth_puzzle
+   tos.py build
+   ```
+5. 连上涂鸦T5板子烧录固件
+   ` ``bash
+
+   tos.py flash
+   ```
+6. 修改完本工程的代码后，做3~5步即可看到效果
 ---
 
 ## 🎥 演示视频
@@ -128,7 +160,6 @@ B -->|4. 推送通知| A
 本项目仅供学习与参赛使用。  
 This project uses code from TuyaOpen (https://github.com/tuya/TuyaOpen),
 which is licensed under the Apache License, Version 2.0.
-See ./third_party/TuyaOpen/LICENSE for details.
 
 ---
 

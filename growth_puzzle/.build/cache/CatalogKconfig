@@ -1,0 +1,26 @@
+# CatalogKconfig
+menu "configure project"
+    config PROJECT_NAME
+        string "PROJECT_NAME"
+        default "growth_puzzle"
+    config PROJECT_VERSION
+        string "PROJECT_VERSION"
+        default "1.0.0"
+    choice
+        prompt "Choose framework"
+        default PROJECT_FRAMEWORK_BASE
+
+        config PROJECT_FRAMEWORK_BASE
+            bool "base"
+
+        config PROJECT_FRAMEWORK_ARDUINO
+            bool "arduino"
+    endchoice
+    config FRAMEWORK_CHOICE
+        string
+        default "base" if PROJECT_FRAMEWORK_BASE
+        default "arduino" if PROJECT_FRAMEWORK_ARDUINO
+endmenu
+
+source "E:/TuyaOpen/boards/Kconfig"
+source "E:/TuyaOpen/src/Kconfig"
