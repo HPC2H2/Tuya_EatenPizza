@@ -1,6 +1,6 @@
 # 🧩 Tuya Eaten Pizza — 拼好时
 
-> **让时间像披萨一样，一块块被吃掉。**  
+> **让时间像披萨一样，一块块地消除。**  
 
 ![Demo](./assets/demo.jpg)  
 *（示意图：墨水屏逐块去除图块 + 手机 App 设置界面）*
@@ -10,10 +10,10 @@
 ## 🌟 核心功能
 
 - ✅ **双参数自由设置**（手机 App）：
-  - 总时长：15 ~ 135 分钟
-  - 时间步长：1 ~ 15 分钟（每过多久消失一块拼图）
+  - 总时长：15 ~ 90 分钟
+  - 时间步长：1 ~ 15 分钟（每过多久消失一图块）
 - ✅ **智能拼图生成**：
-  - 拼图块数 = `总时长 ÷ 步长`，**最大 9 块**
+  - 拼图块数 = `总时长 ÷ 步长`，**最大 6 块**
 - ✅ **个性化图像支持**：
   - 内置多套主题（ 披萨 / 星空 / 初音未来 ）
   - **支持用户上传任意图片**，自动裁剪为*圆形*并分割
@@ -63,7 +63,7 @@ mklink python3.exe python.exe
 | 101 | `total_duration` | value | 总时长（秒） |
 | 102 | `step_interval` | value | 用户设置的步长（分钟） |
 | 103 | `actual_step` | value | 实际使用的步长（分钟） |
-| 104 | `piece_count` | value | 拼图总块数（1~9） |
+| 104 | `piece_count` | value | 图片总块数（1~6） |
 | 105 | `current_piece` | value | 当前已点亮块数 |
 | 106 | `timer_status` | enum | `idle` / `running` / `completed` |
 
@@ -83,23 +83,40 @@ B -->|4. 推送通知| A
 ---
 
 ## 📱 使用流程
+1. **硬件连接**  
+T5AI核心板用USB供电。
+| SPI转接板 | 涂鸦AI板 | 类型  | 说明                                                                    |
+| --------- | -------- | ----- | ----------------------------------------------------------------------- |
+| GND       | `GND`    | Power | 公共地，必须共地以确保信号参考一致                                      |
+| 3V3       | `3V3`    | Power | 为墨水屏模块提供 3.3V 电源                                             |
+| BUSY      | `P24`    | GPIO  | 忙状态输入引脚，高电平表示空闲，低电平表示正在刷新                      |
+| RES       | `P32`    | GPIO  | 复位引脚（低电平有效），用于重启 EPD 驱动 IC                            |
+| DC        | `P03`    | GPIO  | 数据/命令选择引脚：高=数据，低=命令                                     |
+| CS        | `P08`    | GPIO  | 主 IC 片选（CSB），控制上半屏（MASTER_ONLY）                            |
+| SCL       | `P07`    | GPIO  | SPI 时钟信号（SCLK）                                                    |
+| SDA       | `P06`    | GPIO  | SPI 主出从入数据线（MOSI）                                                |
+| CSB2      | `P05`    | GPIO  | 从 IC 片选（CSB2），控制下半屏（SLAVE_ONLY）                            |
+| MS        | `P04`    | GPIO  | 模块选择/模式控制引脚，用于进入 OTP 校准或特殊初始化模式（非 SPI 片选） |
 
-1. **配网**  
+1. **烧写程序到涂鸦AICore开发板**  
+   参考**快速上手**1~5步。
+
+2. **配网**  
    长按设备按钮进入配网模式，在 **涂鸦 Smart App** 中添加设备。
 
-2. **设置专注任务**  
+3. **设置专注任务**  
    - 在 App 中输入：总时长（如 60min）、步长（如 10min）
    - 选择或上传一张图片（建议比例 1:1）
    - 点击“开始专注”
 
-3. **专注进行中**  
-   - 墨水屏初始显示空白框架
-   - 每 `实际步长` 分钟，**局刷点亮下一块拼图**
+4. **专注进行中**  
+   - 墨水屏初始显示完整图片
+   - 每 `实际步长` 分钟，**局刷消除下一块图块**
    - 屏幕文字更新：“已完成 3/6”
 
-4. **专注完成**  
-   - 墨水屏全刷展示完整拼图
-   - 手机收到通知：“🎯 专注成功！你的拼图已完整”
+5. **专注完成**  
+   - 墨水屏显示全白
+   - 手机收到通知：“🎯 专注成功！你的图块已全部消除”
 
 ---
 
@@ -107,12 +124,19 @@ B -->|4. 推送通知| A
 
 ### 目录结构
 ```
-├── eaten-pizza/          # AICore 板固件（C/C++）
-│   ├── main.c
-│   ├── tuya_dp_handler.c
-│   └── eink_driver/
+├── 1.69inch_e-paper_E6/          # AICore 板固件（C/C++）
+│   ├── examples/
 │       ├── gdeh0169e01.c
 │       └── partial_refresh.c
+│   └── lib/
+│       ├── Config/               # .\TuyaOpen\examples\e-Paper\1.69inch_e-Paper_E6\lib\Config
+│       └── e-Paper/              # 1.69英寸E6墨水屏驱动
+│              └── EPD_1in69_E6.c      
+│              └── EPD_1in69_E6.h   
+│       └── Font/                 # .\TuyaOpen\examples\e-Paper\1.69inch_e-Paper_E6\lib\Font
+│       └── GUI/                  # .\TuyaOpen\examples\e-Paper\1.54inch_e-Paper\lib\GUI
+│   ├── CMakeLists.txt
+│   ├── image.h                   # 示例图片
 ├── app-utils/         # App 辅助工具（Python/JS）
 │   ├── image_processor.py   # 图片裁剪 & 分割
 │   └── pizza_layout.json   # 布局配置（1~9块坐标）
@@ -127,9 +151,9 @@ B -->|4. 推送通知| A
    git clone https://github.com/tuya/TuyaOpen.git
 
    ```
-2. 进入apps，克隆本项目
+2. 进入examples，克隆本项目
    ```bash
-   cd apps
+   cd examples
    git clone https://github.com/HPC2H2/Tuya_EatenPizza.git
    ```
 3. 在TuyaOpen的目录打开Powershell，激活tos环境（自动安装编译、烧录所需pip库）
@@ -139,15 +163,15 @@ B -->|4. 推送通知| A
    ```
 4. 进入本项目目录，编译固件
    ```bash
-   cd .\apps\Tuya_EatenPizza\eaten-pizza
+   cd .\examples\Tuya_EatenPizza\eaten-pizza\1.69inch_e-paper_E6
    tos.py build
    ```
-5. 连上涂鸦T5板子烧录固件
-   ` ``bash
+5. 连上涂鸦T5AI板子烧录固件
+   ```bash
 
    tos.py flash
    ```
-6. 修改完本工程的代码后，做3~5步即可看到效果
+6. 修改完本工程的代码后，再实施第3~5步即可看到效果
 ---
 
 ## 🎥 演示视频
