@@ -70,6 +70,7 @@ parameter:
 ******************************************************************************/
 static void EPD_1IN69_E6_MsDev_WriteCom(UBYTE MS_opt, UBYTE Reg)
 {
+    // 1.13 Select CS pins (matching Arduino MsDev_WriteCom)
     if (MS_opt == MASTER_ONLY) {
         DEV_Digital_Write(EPD_CS_PIN, 0);
         DEV_Digital_Write(EPD_CS2_PIN, 1);
@@ -81,12 +82,23 @@ static void EPD_1IN69_E6_MsDev_WriteCom(UBYTE MS_opt, UBYTE Reg)
         DEV_Digital_Write(EPD_CS2_PIN, 0);
     }
 
-    DEV_Delay_ms(1);
-    DEV_Digital_Write(EPD_DC_PIN, 0);
-    DEV_SPI_WriteByte(Reg);
+    // 1.13 delayMicroseconds(10) after CS selection
+    // Calibration: If display doesn't work, try increasing loop count (e.g., 2000, 1600)
+    volatile UDOUBLE delay_loop;
+    for (delay_loop = 0; delay_loop < 2000; delay_loop++)
+        ; // ~10us - adjust if needed
+
+    // 1.13 SPI write command (DC pin is set inside DEV_SPI_WriteCom_NoCS)
+    DEV_SPI_WriteCom_NoCS(Reg);
+
+    // 1.13 delayMicroseconds(10) before CS deselection
+    for (delay_loop = 0; delay_loop < 800; delay_loop++)
+        ;
     DEV_Digital_Write(EPD_CS_PIN, 1);
     DEV_Digital_Write(EPD_CS2_PIN, 1);
-    DEV_Delay_ms(1);
+    // 1.13 delayMicroseconds(10) after CS deselection
+    for (delay_loop = 0; delay_loop < 2000; delay_loop++)
+        ;
 }
 
 /******************************************************************************
@@ -97,6 +109,7 @@ parameter:
 ******************************************************************************/
 static void EPD_1IN69_E6_MsDev_WriteData(UBYTE MS_opt, UBYTE Data)
 {
+    // 1.13 Select CS pins (matching Arduino MsDev_WriteData)
     if (MS_opt == MASTER_ONLY) {
         DEV_Digital_Write(EPD_CS_PIN, 0);
         DEV_Digital_Write(EPD_CS2_PIN, 1);
@@ -108,12 +121,23 @@ static void EPD_1IN69_E6_MsDev_WriteData(UBYTE MS_opt, UBYTE Data)
         DEV_Digital_Write(EPD_CS2_PIN, 0);
     }
 
-    DEV_Delay_ms(1);
-    DEV_Digital_Write(EPD_DC_PIN, 1);
-    DEV_SPI_WriteByte(Data);
+    // 1.13 delayMicroseconds(10) after CS selection
+    // Calibration: If display doesn't work, try increasing loop count (e.g., 2000, 1600)
+    volatile UDOUBLE delay_loop;
+    for (delay_loop = 0; delay_loop < 2000; delay_loop++)
+        ; // ~10us - adjust if needed
+
+    // 1.13 SPI write data (DC pin is set inside DEV_SPI_WriteData_NoCS)
+    DEV_SPI_WriteData_NoCS(Data);
+
+    // 1.13 delayMicroseconds(10) before CS deselection
+    for (delay_loop = 0; delay_loop < 2000; delay_loop++)
+        ;
     DEV_Digital_Write(EPD_CS_PIN, 1);
     DEV_Digital_Write(EPD_CS2_PIN, 1);
-    DEV_Delay_ms(1);
+    // 1.13 delayMicroseconds(10) after CS deselection
+    for (delay_loop = 0; delay_loop < 2000; delay_loop++)
+        ;
 }
 
 /******************************************************************************
@@ -138,6 +162,7 @@ static UBYTE EPD_1IN69_E6_MsDev_ReadData(UBYTE MS_opt)
 
     DEV_Delay_ms(1);
     DEV_Digital_Write(EPD_DC_PIN, 1);
+    // 1.13 SPI read data
     temp = DEV_SPI_ReadData();
     DEV_Digital_Write(EPD_CS_PIN, 1);
     DEV_Digital_Write(EPD_CS2_PIN, 1);

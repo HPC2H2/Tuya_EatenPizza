@@ -99,6 +99,8 @@ void  DEV_Digital_Write(UWORD Pin, UBYTE Value);
 UBYTE DEV_Digital_Read(UWORD Pin);
 
 void DEV_SPI_WriteByte(UBYTE Value);
+void DEV_SPI_WriteCom_NoCS(UBYTE Value);
+void DEV_SPI_WriteData_NoCS(UBYTE Value);
 void DEV_SPI_Write_nByte(uint8_t *pData, uint32_t Len);
 void DEV_Delay_ms(UDOUBLE xms);
 

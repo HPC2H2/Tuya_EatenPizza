@@ -1,11 +1,11 @@
 /*****************************************************************************
 * | File      	:   DEV_Config.c
-* | Author      :   Waveshare team
+* | Author      :   Waveshare team, HPC2H2
 * | Function    :   Hardware underlying interface
 * | Info        :
 *----------------
 * |	This version:   V1.0
-* | Date        :   2025-11-19
+* | Date        :   2026-01-13
 * | Info        :   
 * -----------------------------------------------------------------------------
 #
@@ -68,6 +68,82 @@ UBYTE DEV_Digital_Read(UWORD Pin)
 void DEV_SPI_WriteByte(uint8_t Value)
 {
     tkl_spi_send(SPI_ID, &Value, 1);
+}
+
+/**
+ * 1.13 Precise microsecond delay
+ * Using calibrated delay loop - adjust multiplier based on actual CPU frequency
+ * For 80MHz CPU: ~80 cycles per microsecond, each loop iteration ~2-4 cycles
+ * Calibration: If display still doesn't work, try increasing the multiplier (e.g., 60, 80, 100)
+**/
+static void DEV_Delay_us(UDOUBLE xus)
+{
+    volatile UDOUBLE i;
+    // Calibrated for typical MCU: adjust this multiplier based on your CPU frequency
+    // For 80MHz: try 40-60, for 160MHz: try 80-100
+    // If timing is too fast, increase this value
+    UDOUBLE loop_count = xus * 100; // Increased for better accuracy - adjust if needed
+    for(i = 0; i < loop_count; i++) {
+        __asm__ __volatile__("nop");
+    }
+}
+
+/**
+ * SPI write command using GPIO simulation (matches Arduino SPI4W_WriteCom exactly)
+ * Sets DC pin LOW internally, CS should be controlled by caller
+**/
+void DEV_SPI_WriteCom_NoCS(UBYTE Value)
+{
+    UBYTE i, j = Value;
+    
+    DEV_GPIO_Mode(EPD_MOSI_PIN, 1);
+    DEV_Digital_Write(EPD_SCLK_PIN, 0);
+    DEV_Delay_us(2);
+    DEV_Digital_Write(EPD_DC_PIN, 0);  // DC LOW for command
+    DEV_Delay_us(2);
+    
+    for(i = 0; i < 8; i++) {
+        if (j & 0x80) {
+            DEV_Digital_Write(EPD_MOSI_PIN, 1);
+        } else {
+            DEV_Digital_Write(EPD_MOSI_PIN, 0);
+        }
+        DEV_Delay_us(1);
+        DEV_Digital_Write(EPD_SCLK_PIN, 1);
+        DEV_Delay_us(2);
+        DEV_Digital_Write(EPD_SCLK_PIN, 0);
+        j = j << 1;
+    }
+    DEV_Delay_us(2);
+}
+
+/**
+ * SPI write data using GPIO simulation (matches Arduino SPI4W_WriteData exactly)
+ * Sets DC pin HIGH internally, CS should be controlled by caller
+**/
+void DEV_SPI_WriteData_NoCS(UBYTE Value)
+{
+    UBYTE i, j = Value;
+    
+    DEV_GPIO_Mode(EPD_MOSI_PIN, 1);
+    DEV_Digital_Write(EPD_SCLK_PIN, 0);
+    DEV_Delay_us(2);
+    DEV_Digital_Write(EPD_DC_PIN, 1);  // DC HIGH for data
+    DEV_Delay_us(2);
+    
+    for(i = 0; i < 8; i++) {
+        if (j & 0x80) {
+            DEV_Digital_Write(EPD_MOSI_PIN, 1);
+        } else {
+            DEV_Digital_Write(EPD_MOSI_PIN, 0);
+        }
+        DEV_Delay_us(1);
+        DEV_Digital_Write(EPD_SCLK_PIN, 1);
+        DEV_Delay_us(2);
+        DEV_Digital_Write(EPD_SCLK_PIN, 0);
+        j = j << 1;
+    }
+    DEV_Delay_us(2);
 }
 
 void DEV_SPI_Write_nByte(uint8_t *pData, uint32_t Len)

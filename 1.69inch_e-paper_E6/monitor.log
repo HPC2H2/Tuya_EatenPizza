@@ -1,0 +1,51 @@
+u_bootloader enter
+ty heap base: 28000A00 size: 65280
+__read_manage_block: mag->blockid=255, id=0, mag->state=255.
+__read_manage_block: mag->magic=0xFFFFFFFF, rescrc=0x0, mag->crc32=0xFFFFFFFF.
+__read_manage_block: mag->blockid=255, id=1, mag->state=255.
+__read_manage_block: mag->magic=0xFFFFFFFF, rescrc=0x0, mag->crc32=0xFFFFFFFF.
+_judge_ota_info checkerr0:1, checkerr1:1
+jump toxx:0x2010000
+jump toxx:0x2010000sensor:W(3):uncali sdmadc value:[0 0]
+flash txpwr table:0xf
+xtal_cali:81
+rwnx_cal_set_rfconfig(0x101) phy on; rf off
+-------- co-procresser startup, left heap: 33248, reset reason: 0
+cust:W(101):custstart cp1
+ret_code444444444=0
+wakeup
+wdrv_tx_cmd_buffer_init, addr[0]=0x28011a9c, pattern_addr=0x28011a98
+$wdrv_tx_cmd_buffer_init, addr[1]=0x28011dbc, pattern_addr=0x28011db8
+wakeup
+wdrv_tx_cmd_buffer_init, addr[2]=0x280120dc, pattern_addr=0x280120d8
+W(267):cif_handle_bk_cmd_get_mac_addr_req
+W(267):base mac: bc:35:1e:ce:02:25
+bluetoot:W(271):bk_bluetooth_init bluetooth already initialised
+-------- app startup, left heap: 252616, reset reason: 0
+parameter: 0xffffffff, 0xffffffff
+go to tuya
+EPD_1in69_E6_test Demo/***********************************/ /***********************************/ e-Paper Init and Clear...[0;32;49m[01-01 00:00:00 ty D][main.c:36] EPD Test Start
+[0m
+Debug: Reset completedDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Reset completedDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Reset completedDebug: EPD_1IN69_E6 InitDebug: Reset completedDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Reset completedDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Reset completedDebug: Sending full white data to MASTER
+Debug: Sending full white data to SLAVE
+Debug: Full white data sentDebug: Sending power on commandDebug: 升压Debug: e-Paper busyDebug: e-Paper busy releaseDebug: Sending refresh commandDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Sending power off commandDebug: e-Paper busyDebug: e-Paper busy releaseDebug: EPD display completedDisplay stripe (color bars)...Debug: Reset completedDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Reset completedDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Reset completedDebug: Sending stripe data to MASTER
+Debug: Sending stripe data to SLAVE
+Debug: Stripe data sentDebug: Sending power on commandDebug: 升压Debug: e-Paper busyDebug: e-Paper busy releaseDebug: Sending refresh commandDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Sending power off commandDebug: e-Paper busyDebug: e-Paper busy releaseDebug: EPD display completed
+show image for arrayDebug: Reset completedDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Reset completedDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Reset completedDebug: Sending image data to MASTER (rows 0-99)
+Debug: Sending image data to SLAVE (rows 100-199)
+Debug: Image data sentDebug: Sending power on commandDebug: 升压Debug: e-Paper busyDebug: e-Paper busy releaseDebug: Sending refresh commandDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Sending power off commandDebug: e-Paper busyDebug: e-Paper busy releaseDebug: EPD display completed
+Debug: Reset completedDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Reset completedDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Reset completedDebug: Sending image data to MASTER (rows 0-99)
+Debug: Sending image data to SLAVE (rows 100-199)
+Debug: Image data sentDebug: Sending power on commandDebug: 升压Debug: e-Paper busyDebug: e-Paper busy releaseDebug: Sending refresh commandDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Sending power off commandDebug: e-Paper busyDebug: e-Paper busy releaseDebug: EPD display completed
+Clear...Debug: Reset completedDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Reset completedDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Reset completedDebug: Sending full white data to MASTER
+Debug: Sending full white data to SLAVE
+Debug: Full white data sentDebug: Sending power on commandDebug: 升压Debug: e-Paper busyDebug: e-Paper busy releaseDebug: Sending refresh commandDebug: e-Paper busyDebug: e-Paper busy releaseDebug: Sending power off commandDebug: e-Paper busyDebug: e-Paper busy releaseDebug: EPD display completedGoto Sleep...Debug: Entered deep sleep
+close 5V, Module enters 0 power consumption ...[0;32;49m[01-01 00:03:30 ty D][main.c:40] EPD Test End
+[0m
+[0;32;49m[01-01 00:03:30 ty D][tal_thread.c:299] Del Thrd:tuya_app_main[0m
+[0;32;49m[01-01 00:03:30 ty D][tal_thread.c:252] Thread:tuya_app_main Exec Finish. Set to Del Stat[0m
+[0;32;49m[01-01 00:03:30 ty D][tal_thread.c:125] del list not empty...deleting 0x2802690c, next 0x28026830[0m
+[0;32;49m[01-01 00:03:30 ty D][tal_thread.c:132] Final Free Thread:tuya_app_main, is_self:1[0m
+[0;32;49m[01-01 00:03:30 ty D][tal_thread.c:136] delay to delete thread self[0m
+[0;32;49m[01-01 00:03:30 ty D][tal_thread.c:147] finally delete thread self[0m
+[0;32;49m[01-01 00:03:30 ty D][tal_thread.c:103] real delete thread:0x60741048[0m
