@@ -1,0 +1,121 @@
+export default Render({
+  getImageDimensions(src) {
+    const canvas = this.canvas;
+    return this.getCanvas('focus-image-process-canvas').then(activeCanvas => {
+      const image = activeCanvas.createImage();
+      return new Promise((resolve, reject) => {
+        image.onload = () => resolve({ width: image.width, height: image.height });
+        image.onerror = () => reject('image decode failed');
+        image.src = src;
+      });
+    });
+  },
+
+  async getCanvas(canvasId) {
+    if (this.canvas && this.canvasId === canvasId) return this.canvas;
+    const canvas = await getCanvasById(canvasId);
+    if (!canvas) throw new Error('image processing canvas not found');
+    canvas.width = 400;
+    canvas.height = 400;
+    this.canvas = canvas;
+    this.canvasId = canvasId;
+    this.ctx = canvas.getContext('2d');
+    return canvas;
+  },
+
+  async processImage(canvasId, src, cropRect) {
+    const canvas = await this.getCanvas(canvasId);
+    const ctx = this.ctx;
+    const image = canvas.createImage();
+
+    return new Promise((resolve, reject) => {
+      image.onload = () => {
+        try {
+          const sx = Number(cropRect.x) || 0;
+          const sy = Number(cropRect.y) || 0;
+          const size = Number(cropRect.size);
+          if (!size || size <= 0) throw new Error('invalid crop rectangle');
+
+          // 白底绘制会把 PNG/WebP 透明像素正确合成为白色。
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, 400, 400);
+          ctx.drawImage(image, sx, sy, size, size, 0, 0, 400, 400);
+
+          const imageData = ctx.getImageData(0, 0, 400, 400);
+          const rgba = imageData.data;
+          const palette = [
+            [0, 0, 0, 0],
+            [1, 255, 255, 255],
+            [2, 255, 220, 0],
+            [3, 220, 30, 35],
+            [5, 30, 85, 180],
+            [6, 40, 145, 70],
+          ];
+          const packed = new Array(80000);
+          let packedIndex = 0;
+          let highNibble = 0;
+
+          for (let pixel = 0; pixel < 160000; pixel += 1) {
+            const x = pixel % 400;
+            const y = Math.floor(pixel / 400);
+            const dx = x - 199.5;
+            const dy = y - 199.5;
+            let best = palette[1];
+
+            // 圆形墨水屏有效区域以外固定填白。
+            if (dx * dx + dy * dy <= 40000) {
+              const p = pixel * 4;
+              const alpha = rgba[p + 3] / 255;
+              const red = rgba[p] * alpha + 255 * (1 - alpha);
+              const green = rgba[p + 1] * alpha + 255 * (1 - alpha);
+              const blue = rgba[p + 2] * alpha + 255 * (1 - alpha);
+              let bestDistance = Infinity;
+              for (let i = 0; i < palette.length; i += 1) {
+                const color = palette[i];
+                const dr = red - color[1];
+                const dg = green - color[2];
+                const db = blue - color[3];
+                const distance = dr * dr + dg * dg + db * db;
+                if (distance < bestDistance) {
+                  bestDistance = distance;
+                  best = color;
+                }
+              }
+            }
+
+            const rgbaIndex = pixel * 4;
+            rgba[rgbaIndex] = best[1];
+            rgba[rgbaIndex + 1] = best[2];
+            rgba[rgbaIndex + 2] = best[3];
+            rgba[rgbaIndex + 3] = 255;
+
+            if ((pixel & 1) === 0) {
+              highNibble = best[0] << 4;
+            } else {
+              packed[packedIndex] = highNibble | best[0];
+              packedIndex += 1;
+            }
+          }
+
+          ctx.putImageData(imageData, 0, 0);
+
+          const lookup = new Array(256);
+          for (let i = 0; i < 256; i += 1) lookup[i] = i.toString(16).padStart(2, '0');
+          const chunks = [];
+          for (let start = 0; start < packed.length; start += 2048) {
+            let chunk = '';
+            const end = Math.min(start + 2048, packed.length);
+            for (let i = start; i < end; i += 1) chunk += lookup[packed[i]];
+            chunks.push(chunk);
+          }
+
+          resolve({ width: 400, height: 400, packedHex: chunks.join('') });
+        } catch (error) {
+          reject(error && error.message ? error.message : 'image processing failed');
+        }
+      };
+      image.onerror = () => reject('image decode failed');
+      image.src = src;
+    });
+  },
+});

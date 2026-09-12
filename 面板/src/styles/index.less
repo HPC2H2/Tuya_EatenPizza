@@ -1,0 +1,35 @@
+// 若无需跟随 App 主题变量，使用小程序自身的深浅色模式变量定义
+// 可参考如下代码示例及对应文档 https://developer.tuya.com/cn/miniapp/develop/ray/guide/theme/css
+:root {
+  /* 首页样式 */
+  --index-main-bg: #FFFFFF; // 页面底色
+  --index-title-bg: #FFFFFF; // title背景
+  --index-title-color: #000000E5; // title字体色
+  --index-footer-bar-bg: #FFFFFF; // 底部操作栏底色
+  --index-icon-color: rgba(0, 0, 0, 0.5); // 图标颜色
+}
+
+:root[theme='dark'] {
+  /* 首页样式 */
+  --index-main-bg: #000000; // 页面底色
+  --index-title-bg: #000000; // title背景
+  --index-title-color: #FFFFFF; // title字体色
+  --index-footer-bar-bg: rgb(26, 25, 25); // 底部操作栏底色
+  --index-icon-color: rgba(255, 255, 255, 0.5); // 图标颜色
+}
+
+// native运行时注入
+// :root {
+//   --app-device-navbar-height: 44px;
+//   --app-device-orientation: portraitpx;
+//   --app-device-screen-height: 667px;
+//   --app-device-screen-width: 375px;
+//   --app-device-status-height: 20px;
+//   --app-device-tabbar-height: 44px;
+// }
+
+// navigationStyle: custom 时，为页面顶部内容避让状态栏/刘海区域
+.safe-area-pt {
+  padding-top: calc(var(--app-device-navbar-height) + var(--app-device-status-height));
+}
+

@@ -1,0 +1,5 @@
+1.69inch_e-paper_E6/.build/
+1.69inch_e-paper_E6/dist/
+1.69inch_e-paper_E6/*.log
+1.69inch_e-paper_E6/examples/tuya_config_private.h
+app-utils/__pycache__/

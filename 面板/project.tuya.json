@@ -1,0 +1,25 @@
+{
+  "name": "拼好时六色墨水屏面板",
+  "type": "panel-app",
+  "ownerType": "tuya-official",
+  "i18n": false,
+  "miniprogramRoot": "./dist/tuya",
+  "projectId": "tytfpvbwjtsqergb3e",
+  "dependencies": {
+    "BaseKit": "3.32.6",
+    "P2PKit": "3.0.0",
+    "IPCKit": "7.3.0",
+    "BizKit": "4.25.2",
+    "AIStreamKit": "2.1.0",
+    "MapKit": "7.2.1",
+    "DeviceKit": "7.2.6",
+    "MiniKit": "3.29.6",
+    "AIKit": "1.9.2",
+    "MediaKit": "3.5.0"
+  },
+  "baseversion": "2.30.2",
+  "devMode": "ray",
+  "compileType": "miniprogram",
+  "projectname": "拼好时六色墨水屏面板",
+  "description": "AI创建-智慧屏-3413"
+}

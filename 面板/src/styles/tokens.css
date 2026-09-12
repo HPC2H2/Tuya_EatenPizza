@@ -1,0 +1,68 @@
+/* Auto-generated from design_markdown — do not edit manually */
+:root {
+  /* Colors */
+  --color-brand-primary: #C2410C;
+  --color-brand-primarypressed: #9A3412;
+  --color-brand-accent: #E8572A;
+  --color-brand-secondary: #2B6CB0;
+  --color-brand-tertiary: #2F855A;
+  --color-surface-background: #F7F8FA;
+  --color-surface-surface: #FFFFFF;
+  --color-surface-surfacesubtle: #F1F3F5;
+  --color-surface-divider: #E5E7EB;
+  --color-text-textprimary: #1F2937;
+  --color-text-textsecondary: #4B5563;
+  --color-text-textmuted: #6B7280;
+  --color-text-onprimary: #FFFFFF;
+  --color-semantic-success: #22C55E;
+  --color-semantic-warning: #F59E0B;
+  --color-semantic-error: #EF4444;
+  --color-semantic-info: #3B82F6;
+  /* Typography */
+  --font-displayfont: PingFang SC, Noto Sans SC, system-ui, -apple-system, sans-serif;
+  --font-bodyfont: PingFang SC, Noto Sans SC, system-ui, -apple-system, sans-serif;
+  --text-h1: 22px;
+  --text-h2: 18px;
+  --text-title: 16px;
+  --text-body: 14px;
+  --text-caption: 12px;
+  --text-micro: 11px;
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-base: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  /* Border Radius */
+  --radius-card: 16px;
+  --radius-button: 16px;
+  --radius-tag: 999px;
+  --radius-label: 0;
+  /* Elevation */
+  --shadow-shadowcard: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-shadowfloat: 0 6px 16px rgba(0,0,0,0.12);
+  --shadow-shadowmodal: 0 16px 32px rgba(0,0,0,0.18);
+}
+
+/* Dark mode — activates when <html theme="dark"> */
+:root[theme='dark'] {
+  --color-brand-primary: #ffb59d;
+  --color-brand-primarypressed: #e76c46;
+  --color-brand-accent: #f56033;
+  --color-brand-secondary: #5993da;
+  --color-brand-tertiary: #4da173;
+  --color-surface-background: #111415;
+  --color-surface-surface: #1e2020;
+  --color-surface-surfacesubtle: #8e9193;
+  --color-surface-divider: #8e9195;
+  --color-text-textprimary: #d9e3f6;
+  --color-text-textsecondary: #a7b1c1;
+  --color-text-textmuted: #8a91a0;
+  --color-text-onprimary: #909191;
+  --color-semantic-success: #00a74b;
+  --color-semantic-warning: #ca8100;
+  --color-semantic-error: #ff5451;
+  --color-semantic-info: #4d8eff;
+}

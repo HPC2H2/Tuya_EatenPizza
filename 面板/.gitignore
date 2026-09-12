@@ -1,0 +1,11 @@
+.DS_Store
+node_modules
+.ray
+dist
+/app/
+.todos.json
+.vision/config.json
+prepare.bootstrap.js
+functional_downloads/
+minipack.config.cjs
+.ide-check/

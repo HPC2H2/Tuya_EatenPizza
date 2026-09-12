@@ -1,0 +1,48 @@
+import React, { Component } from 'react';
+import { Provider } from 'react-redux';
+import type { DevInfo } from '@ray-js/panel-sdk/lib/types/devInfo';
+import { devices, dpKit } from './devices';
+import { updateThemeType } from './redux/modules/themeSlice';
+import { initializeSystemInfo } from './redux/modules/systemInfoSlice';
+import { getCachedSystemInfo } from './api/getCachedSystemInfo';
+import store from './redux';
+import './styles/index.less';
+
+interface Props {
+  devInfo: DevInfo;
+  // eslint-disable-next-line react/require-default-props
+  extraInfo?: Record<string, any>;
+}
+
+interface State {
+  devInfo: DevInfo;
+}
+
+const composeLayout = (SubComp: React.ComponentType<any>) => {
+  const { dispatch } = store;
+  return class PanelComponent extends Component<Props, State> {
+    async onLaunch(object: any) {
+      console.log('=== App onLaunch', object);
+      devices.common.init();
+      devices.common.onInitialized(device => dpKit.init(device));
+      const systemInfo = getCachedSystemInfo();
+      const { theme } = systemInfo;
+
+      dispatch(initializeSystemInfo(systemInfo));
+      dispatch(updateThemeType(theme));
+    }
+
+    render() {
+      const { extraInfo } = this.props;
+
+      return (
+        <Provider store={store}>
+          {/* @ts-ignore */}
+          <SubComp extraInfo={extraInfo} {...this.props} />
+        </Provider>
+      );
+    }
+  };
+};
+
+export default composeLayout;

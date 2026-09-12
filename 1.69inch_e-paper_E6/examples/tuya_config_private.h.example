@@ -1,0 +1,8 @@
+#ifndef TUYA_CONFIG_PRIVATE_H
+#define TUYA_CONFIG_PRIVATE_H
+
+#define TUYA_PRODUCT_ID      "your_product_id"
+#define TUYA_OPENSDK_UUID    "your_device_uuid"
+#define TUYA_OPENSDK_AUTHKEY "your_device_authkey"
+
+#endif

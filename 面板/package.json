@@ -1,0 +1,58 @@
+{
+  "name": "public-sdm-template",
+  "version": "1.2.6",
+  "description": "Panel SDM Template",
+  "main": "index.js",
+  "private": true,
+  "author": "Tuya.inc",
+  "license": "MIT",
+  "scripts": {
+    "start": "ray start --target tuya",
+    "build": "ray build --target tuya",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
+    "prebuild": "node scripts/prebuild.js"
+  },
+  "dependencies": {
+    "@ray-js/panel-sdk": "1.16.1",
+    "@ray-js/ray": "1.7.82",
+    "@ray-js/ray-error-catch": "0.0.26",
+    "@reduxjs/toolkit": "1.9.3",
+    "@tuya-miniapp/cloud-api": "1.7.1",
+    "clsx": "1.2.1",
+    "lucide": "1.8.0",
+    "react-redux": "7.2.1",
+    "redux-logger": "3.0.6",
+    "weapp-tailwindcss": "4.2.5"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "7.2.1",
+    "@commitlint/config-conventional": "9.0.1",
+    "@ray-js/cli": "1.7.55",
+    "@ray-js/types": "1.7.82",
+    "@types/lodash-es": "4.17.6",
+    "@types/react": "17.0.93",
+    "@types/react-dom": "17.0.26",
+    "core-js": "3.29.1",
+    "eslint-config-tuya-panel": "0.4.1",
+    "husky": "1.2.0",
+    "lint-staged": "10.2.11",
+    "typescript": "^5.9.3"
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS --config commitlint.config.js",
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "git add"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write",
+      "git add"
+    ]
+  }
+}

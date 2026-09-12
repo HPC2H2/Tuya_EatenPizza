@@ -1,0 +1,25 @@
+module.exports = {
+  extends: ['tuya-panel'],
+  plugins: ['local'],
+  rules: {
+    'local/flex-requires-display': 'error',
+    'local/no-html-elements': 'error',
+    'local/no-block-children-in-text': 'error',
+    'local/no-layout-classes-on-text': 'error',
+    'local/flex-item-requires-flex-parent': 'error',
+    'no-restricted-globals': [
+      'error',
+      { name: 'window', message: 'Miniapp 环境不可用，请使用 ty.* API 替代' },
+      { name: 'document', message: 'Miniapp 环境不可用，请使用 ty.* API 替代' },
+    ],
+    camelcase: 0,
+    'no-console': 0,
+    'react/no-array-index-key': 0,
+    'import/no-unresolved': 0,
+    '@typescript-eslint/ban-ts-comment': 0,
+    '@typescript-eslint/explicit-module-boundary-types': 0,
+    '@typescript-eslint/no-unused-vars': 0,
+    'react/require-default-props': 0,
+    'no-param-reassign': 0,
+  },
+};

@@ -30,6 +30,11 @@
 ******************************************************************************/
 #include "DEV_Config.h"
 
+/* TuyaOpen's T5 public microsecond wrapper is currently a no-op. */
+extern void bk_delay_us(uint32_t us);
+
+static UBYTE s_sda_is_output = 0;
+
 /*GPIO output init*/
 TUYA_GPIO_BASE_CFG_T out_pin_cfg = {
     .mode = TUYA_GPIO_PUSH_PULL, 
@@ -67,24 +72,28 @@ UBYTE DEV_Digital_Read(UWORD Pin)
 **/
 void DEV_SPI_WriteByte(uint8_t Value)
 {
-    tkl_spi_send(SPI_ID, &Value, 1);
+    DEV_SPI_WriteData_NoCS(Value);
 }
 
-/**
- * 1.13 Precise microsecond delay
- * Using calibrated delay loop - adjust multiplier based on actual CPU frequency
- * For 80MHz CPU: ~80 cycles per microsecond, each loop iteration ~2-4 cycles
- * Calibration: If display still doesn't work, try increasing the multiplier (e.g., 60, 80, 100)
-**/
-static void DEV_Delay_us(UDOUBLE xus)
+/* Precise T5 platform microsecond delay. */
+void DEV_Delay_us(UDOUBLE xus)
 {
-    volatile UDOUBLE i;
-    // Calibrated for typical MCU: adjust this multiplier based on your CPU frequency
-    // For 80MHz: try 40-60, for 160MHz: try 80-100
-    // If timing is too fast, increase this value
-    UDOUBLE loop_count = xus * 100; // Increased for better accuracy - adjust if needed
-    for(i = 0; i < loop_count; i++) {
-        __asm__ __volatile__("nop");
+    bk_delay_us(xus);
+}
+
+static void DEV_SPI_SetSdaOutput(void)
+{
+    if (!s_sda_is_output) {
+        DEV_GPIO_Mode(EPD_MOSI_PIN, 1);
+        s_sda_is_output = 1;
+    }
+}
+
+static void DEV_SPI_SetSdaInput(void)
+{
+    if (s_sda_is_output) {
+        DEV_GPIO_Mode(EPD_MOSI_PIN, 0);
+        s_sda_is_output = 0;
     }
 }
 
@@ -96,7 +105,7 @@ void DEV_SPI_WriteCom_NoCS(UBYTE Value)
 {
     UBYTE i, j = Value;
     
-    DEV_GPIO_Mode(EPD_MOSI_PIN, 1);
+    DEV_SPI_SetSdaOutput();
     DEV_Digital_Write(EPD_SCLK_PIN, 0);
     DEV_Delay_us(2);
     DEV_Digital_Write(EPD_DC_PIN, 0);  // DC LOW for command
@@ -125,7 +134,7 @@ void DEV_SPI_WriteData_NoCS(UBYTE Value)
 {
     UBYTE i, j = Value;
     
-    DEV_GPIO_Mode(EPD_MOSI_PIN, 1);
+    DEV_SPI_SetSdaOutput();
     DEV_Digital_Write(EPD_SCLK_PIN, 0);
     DEV_Delay_us(2);
     DEV_Digital_Write(EPD_DC_PIN, 1);  // DC HIGH for data
@@ -148,7 +157,15 @@ void DEV_SPI_WriteData_NoCS(UBYTE Value)
 
 void DEV_SPI_Write_nByte(uint8_t *pData, uint32_t Len)
 {
-    tkl_spi_send(SPI_ID, pData, Len);
+    uint32_t i;
+
+    if (pData == NULL) {
+        return;
+    }
+
+    for (i = 0; i < Len; i++) {
+        DEV_SPI_WriteData_NoCS(pData[i]);
+    }
 }
 
 /**
@@ -179,20 +196,26 @@ void DEV_GPIO_Init(void)
 	DEV_GPIO_Mode(EPD_CS_PIN, 1);
 	DEV_GPIO_Mode(EPD_CS2_PIN, 1);
 	DEV_GPIO_Mode(EPD_MS_PIN, 1);
-    // DEV_GPIO_Mode(EPD_MOSI_PIN, 0);
-	// DEV_GPIO_Mode(EPD_SCLK_PIN, 1);
+	DEV_GPIO_Mode(EPD_SCLK_PIN, 1);
+	DEV_GPIO_Mode(EPD_MOSI_PIN, 1);
+	s_sda_is_output = 1;
 
+	DEV_Digital_Write(EPD_RST_PIN, 1);
+	DEV_Digital_Write(EPD_DC_PIN, 1);
 	DEV_Digital_Write(EPD_CS_PIN, 1);
 	DEV_Digital_Write(EPD_CS2_PIN, 1);
 	DEV_Digital_Write(EPD_MS_PIN, 1);
-    
+	DEV_Digital_Write(EPD_SCLK_PIN, 0);
+	DEV_Digital_Write(EPD_MOSI_PIN, 1);
 }
 
-void DEV_SPI_SendnData(UBYTE *Reg)
+void DEV_SPI_SendnData(const UBYTE *Reg, UDOUBLE Len)
 {
-    UDOUBLE size;
-    size = sizeof(Reg);
-    for(UDOUBLE i=0 ; i<size ; i++)
+    if (Reg == NULL) {
+        return;
+    }
+
+    for(UDOUBLE i=0 ; i<Len ; i++)
     {
         DEV_SPI_SendData(Reg[i]);
     }
@@ -201,7 +224,7 @@ void DEV_SPI_SendnData(UBYTE *Reg)
 void DEV_SPI_SendData(UBYTE Reg)
 {
 	UBYTE i,j=Reg;
-	DEV_GPIO_Mode(EPD_MOSI_PIN, 1);
+	DEV_SPI_SetSdaOutput();
 	DEV_Digital_Write(EPD_CS_PIN, 0);
 	for(i = 0; i<8; i++)
     {
@@ -224,40 +247,35 @@ void DEV_SPI_SendData(UBYTE Reg)
 
 UBYTE DEV_SPI_ReadData()
 {
-	UBYTE i,j=0xff;
-	DEV_GPIO_Mode(EPD_MOSI_PIN, 0);
-	DEV_Digital_Write(EPD_CS_PIN, 0);
+	UBYTE i,j=0;
+	DEV_SPI_SetSdaInput();
+	DEV_Digital_Write(EPD_SCLK_PIN, 0);
+	DEV_Delay_us(2);
+	DEV_Digital_Write(EPD_DC_PIN, 1);
+	DEV_Delay_us(2);
 	for(i = 0; i<8; i++)
 	{
-		DEV_Digital_Write(EPD_SCLK_PIN, 0);
+		DEV_Digital_Write(EPD_SCLK_PIN, 1);
+		DEV_Delay_us(2);
 		j = j << 1;
 		if (DEV_Digital_Read(EPD_MOSI_PIN))
 		{
-				j = j | 0x01;
+			j = j | 0x01;
 		}
-		else
-		{
-				j= j & 0xfe;
-		}
-		DEV_Digital_Write(EPD_SCLK_PIN, 1);
+		DEV_Delay_us(1);
+		DEV_Digital_Write(EPD_SCLK_PIN, 0);
+		DEV_Delay_us(2);
 	}
-	DEV_Digital_Write(EPD_SCLK_PIN, 0);
-	DEV_Digital_Write(EPD_CS_PIN, 1);
+	DEV_Delay_us(2);
+	DEV_SPI_SetSdaOutput();
 	return j;
 }
 
 UBYTE DEV_Module_Init(void)
 {
     printf("/***********************************/ \r\n");
-    /*spi init*/
-    TUYA_SPI_BASE_CFG_T spi_cfg = {.mode = TUYA_SPI_MODE0,
-                                   .freq_hz = SPI_FREQ,
-                                   .databits = TUYA_SPI_DATA_BIT8,
-                                   .bitorder = TUYA_SPI_ORDER_MSB2LSB,
-                                   .role = TUYA_SPI_ROLE_MASTER,
-                                   .type = TUYA_SPI_SOFT_ONE_WIRE_TYPE};
-    tkl_spi_init(SPI_ID, &spi_cfg);
-
+    /* P6/P7 are driven as GPIO.  T5 SPI1 uses P2/P3/P4/P5 and would collide
+     * with this board's DC/MS/CSB2 wiring. */
     DEV_GPIO_Init();
     printf("/***********************************/ \r\n");
 	return 0;
@@ -265,7 +283,6 @@ UBYTE DEV_Module_Init(void)
 
 void DEV_Module_Exit(void)
 {
-    tkl_spi_deinit(SPI_ID);
     tkl_gpio_deinit(EPD_SCLK_PIN);
     tkl_gpio_deinit(EPD_MOSI_PIN);
     tkl_gpio_deinit(EPD_CS_PIN);

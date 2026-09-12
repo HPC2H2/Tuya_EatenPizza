@@ -1,0 +1,10 @@
+allowBuilds:
+  core-js: true
+  ejs: true
+  esbuild: true
+  fsevents: true
+  husky: true
+  styled-components: true
+  weapp-tailwindcss: true
+minimumReleaseAgeExclude:
+  - '@tuya-miniapp/cloud-api@1.7.1'

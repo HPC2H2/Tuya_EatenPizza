@@ -34,6 +34,8 @@
 static unsigned char Temptr_Cur = 0;
 static unsigned char OTP_PWR[5] = {0};
 
+#define EPD_BUSY_TIMEOUT_MS 120000U
+
 /******************************************************************************
 function :	Software reset
 parameter:
@@ -55,9 +57,16 @@ parameter:
 ******************************************************************************/
 static void EPD_1IN69_E6_ReadBusy(void)
 {
+    UDOUBLE elapsed_ms = 0;
+
     Debug("e-Paper busy\r\n");
     while (DEV_Digital_Read(EPD_BUSY_PIN) == 0) { // 低电平为忙碌，高电平为空闲
         DEV_Delay_ms(1);
+        elapsed_ms++;
+        if (elapsed_ms >= EPD_BUSY_TIMEOUT_MS) {
+            Debug("ERROR: e-Paper BUSY timeout (check BUSY, 3V3 and GND)\r\n");
+            return;
+        }
     }
     Debug("e-Paper busy release\r\n");
 }
@@ -82,23 +91,15 @@ static void EPD_1IN69_E6_MsDev_WriteCom(UBYTE MS_opt, UBYTE Reg)
         DEV_Digital_Write(EPD_CS2_PIN, 0);
     }
 
-    // 1.13 delayMicroseconds(10) after CS selection
-    // Calibration: If display doesn't work, try increasing loop count (e.g., 2000, 1600)
-    volatile UDOUBLE delay_loop;
-    for (delay_loop = 0; delay_loop < 2000; delay_loop++)
-        ; // ~10us - adjust if needed
+    DEV_Delay_us(10);
 
     // 1.13 SPI write command (DC pin is set inside DEV_SPI_WriteCom_NoCS)
     DEV_SPI_WriteCom_NoCS(Reg);
 
-    // 1.13 delayMicroseconds(10) before CS deselection
-    for (delay_loop = 0; delay_loop < 800; delay_loop++)
-        ;
+    DEV_Delay_us(10);
     DEV_Digital_Write(EPD_CS_PIN, 1);
     DEV_Digital_Write(EPD_CS2_PIN, 1);
-    // 1.13 delayMicroseconds(10) after CS deselection
-    for (delay_loop = 0; delay_loop < 2000; delay_loop++)
-        ;
+    DEV_Delay_us(10);
 }
 
 /******************************************************************************
@@ -121,23 +122,15 @@ static void EPD_1IN69_E6_MsDev_WriteData(UBYTE MS_opt, UBYTE Data)
         DEV_Digital_Write(EPD_CS2_PIN, 0);
     }
 
-    // 1.13 delayMicroseconds(10) after CS selection
-    // Calibration: If display doesn't work, try increasing loop count (e.g., 2000, 1600)
-    volatile UDOUBLE delay_loop;
-    for (delay_loop = 0; delay_loop < 2000; delay_loop++)
-        ; // ~10us - adjust if needed
+    DEV_Delay_us(10);
 
     // 1.13 SPI write data (DC pin is set inside DEV_SPI_WriteData_NoCS)
     DEV_SPI_WriteData_NoCS(Data);
 
-    // 1.13 delayMicroseconds(10) before CS deselection
-    for (delay_loop = 0; delay_loop < 2000; delay_loop++)
-        ;
+    DEV_Delay_us(10);
     DEV_Digital_Write(EPD_CS_PIN, 1);
     DEV_Digital_Write(EPD_CS2_PIN, 1);
-    // 1.13 delayMicroseconds(10) after CS deselection
-    for (delay_loop = 0; delay_loop < 2000; delay_loop++)
-        ;
+    DEV_Delay_us(10);
 }
 
 /******************************************************************************
@@ -160,13 +153,12 @@ static UBYTE EPD_1IN69_E6_MsDev_ReadData(UBYTE MS_opt)
         DEV_Digital_Write(EPD_CS2_PIN, 0);
     }
 
-    DEV_Delay_ms(1);
-    DEV_Digital_Write(EPD_DC_PIN, 1);
-    // 1.13 SPI read data
+    DEV_Delay_us(10);
     temp = DEV_SPI_ReadData();
+    DEV_Delay_us(10);
     DEV_Digital_Write(EPD_CS_PIN, 1);
     DEV_Digital_Write(EPD_CS2_PIN, 1);
-    DEV_Delay_ms(1);
+    DEV_Delay_us(10);
 
     return temp;
 }
@@ -187,6 +179,7 @@ static UBYTE EPD_1IN69_E6_ReadTemptr(void)
     temptr_decml = EPD_1IN69_E6_MsDev_ReadData(MASTER_ONLY);
 
     Temptr_Cur = temptr_intgr;
+    Debug("Panel temperature: %u C (fraction 0x%02X)\r\n", temptr_intgr, temptr_decml);
 
     return temptr_intgr;
 }
@@ -273,6 +266,9 @@ static void EPD_1IN69_E6_Read_OTP_PWR(UBYTE temptr_opt)
         OTP_PWR[i] = EPD_1IN69_E6_MsDev_ReadData(MASTER_ONLY);
     }
 
+    Debug("OTP VCOM=0x%02X PWR=%02X %02X %02X %02X %02X\r\n",
+          OTP_VCOM, OTP_PWR[0], OTP_PWR[1], OTP_PWR[2], OTP_PWR[3], OTP_PWR[4]);
+
     EPD_1IN69_E6_MsDev_WriteCom(MASTER_SLAVE, 0xF5);
     EPD_1IN69_E6_MsDev_WriteData(MASTER_SLAVE, 0x00);
 
@@ -346,19 +342,19 @@ static void EPD_1IN69_E6_Send_HV_Stripe_Data(void)
     for (col = 0; col < 400; col++) {
         for (row = 0; row < 100; row++) {
             if (col >= 82 && col < 200 && row >= 10 && row <= 36) {
-                EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, WHITE);
+                EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, EPD_COLOR_WHITE);
             } else if (col >= 82 && col < 200 && row > 36 && row <= 62) {
-                EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, YELLOW);
+                EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, EPD_COLOR_YELLOW);
             } else if (col >= 82 && col < 200 && row > 62 && row <= 89) {
-                EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, GREEN);
+                EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, EPD_COLOR_GREEN);
             } else if (col >= 200 && col < 318 && row >= 10 && row <= 36) {
-                EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, BLACK);
+                EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, EPD_COLOR_BLACK);
             } else if (col >= 200 && col < 318 && row > 36 && row <= 62) {
-                EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, BLUE);
+                EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, EPD_COLOR_BLUE);
             } else if (col >= 200 && col < 318 && row > 62 && row <= 89) {
-                EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, RED);
+                EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, EPD_COLOR_RED);
             } else {
-                EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, WHITE);
+                EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, EPD_COLOR_WHITE);
             }
         }
     }
@@ -373,19 +369,19 @@ static void EPD_1IN69_E6_Send_HV_Stripe_Data(void)
     for (col = 0; col < 400; col++) {
         for (row = 0; row < 100; row++) {
             if (col >= 82 && col < 200 && row >= 10 && row <= 36) {
-                EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, WHITE);
+                EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, EPD_COLOR_WHITE);
             } else if (col >= 82 && col < 200 && row > 36 && row <= 62) {
-                EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, YELLOW);
+                EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, EPD_COLOR_YELLOW);
             } else if (col >= 82 && col < 200 && row > 62 && row <= 89) {
-                EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, GREEN);
+                EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, EPD_COLOR_GREEN);
             } else if (col >= 200 && col < 318 && row >= 10 && row <= 36) {
-                EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, BLACK);
+                EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, EPD_COLOR_BLACK);
             } else if (col >= 200 && col < 318 && row > 36 && row <= 62) {
-                EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, BLUE);
+                EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, EPD_COLOR_BLUE);
             } else if (col >= 200 && col < 318 && row > 62 && row <= 89) {
-                EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, RED);
+                EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, EPD_COLOR_RED);
             } else {
-                EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, WHITE);
+                EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, EPD_COLOR_WHITE);
             }
         }
     }
@@ -402,8 +398,8 @@ static void EPD_1IN69_E6_Send_HV_Stripe_imageData(const unsigned char *pic)
     UWORD col, row;
     UBYTE temp1, temp2, temp;
 
-    // 发送数据到主IC（上半部分：行 0 到 99）
-    Debug("Sending image data to MASTER (rows 0-99)\r\n");
+    // 输入为逐行 4-bit 像素；主 IC 接收每组四像素中的偶数 x 像素。
+    Debug("Sending image data to MASTER (even x pixels)\r\n");
     EPD_1IN69_E6_MsDev_WriteCom(MASTER_ONLY, 0x00);
     EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, 0x13);
     EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, 0xE9);
@@ -412,9 +408,9 @@ static void EPD_1IN69_E6_Send_HV_Stripe_imageData(const unsigned char *pic)
     DEV_Delay_ms(10);
     for (col = 0; col < 400; col++) {
         for (row = 0; row < 100; row++) {
-            // 按列优先计算索引
+            // 每行 200 字节，每字节包含两个相邻的横向像素。
             UDOUBLE index = col * 200 + row * 2;
-            // 提取数据
+            // 取连续两个字节的高半字节，即 x=4n 和 x=4n+2。
             temp1 = (pic[index] & 0xF0);
             temp2 = (pic[index + 1] >> 4);
             temp  = temp1 | temp2;
@@ -422,8 +418,8 @@ static void EPD_1IN69_E6_Send_HV_Stripe_imageData(const unsigned char *pic)
         }
     }
 
-    // 发送数据到从IC（下半部分：行 100 到 199）
-    Debug("Sending image data to SLAVE (rows 100-199)\r\n");
+    // 从 IC 接收每组四像素中的奇数 x 像素。
+    Debug("Sending image data to SLAVE (odd x pixels)\r\n");
     EPD_1IN69_E6_MsDev_WriteCom(SLAVE_ONLY, 0x00);
     EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, 0x17);
     EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, 0xE9);
@@ -432,9 +428,8 @@ static void EPD_1IN69_E6_Send_HV_Stripe_imageData(const unsigned char *pic)
     DEV_Delay_ms(10);
     for (col = 0; col < 400; col++) {
         for (row = 0; row < 100; row++) {
-            // 按列优先计算索引
+            // 取连续两个字节的低半字节，即 x=4n+1 和 x=4n+3。
             UDOUBLE index = col * 200 + row * 2;
-            // 提取数据
             temp1 = ((pic[index] & 0x0F) << 4);
             temp2 = (pic[index + 1] & 0x0F);
             temp  = temp1 | temp2;
@@ -461,7 +456,7 @@ static void EPD_1IN69_E6_Send_HV_Stripe_cleanData(void)
     DEV_Delay_ms(10);
     for (col = 0; col < 400; col++) {
         for (row = 0; row < 100; row++) {
-            EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, WHITE);
+            EPD_1IN69_E6_MsDev_WriteData(MASTER_ONLY, EPD_COLOR_WHITE);
         }
     }
 
@@ -474,7 +469,7 @@ static void EPD_1IN69_E6_Send_HV_Stripe_cleanData(void)
     DEV_Delay_ms(10);
     for (col = 0; col < 400; col++) {
         for (row = 0; row < 100; row++) {
-            EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, WHITE);
+            EPD_1IN69_E6_MsDev_WriteData(SLAVE_ONLY, EPD_COLOR_WHITE);
         }
     }
     Debug("Full white data sent\r\n");

@@ -1,0 +1,117 @@
+{
+  "schema_version": 2,
+  "purpose": "Repository protocol reference for firmware, panel development, and manual Tuya product configuration. This is not a Tuya platform import file.",
+  "tuya_platform_importable": false,
+  "dps": [
+    {
+      "id": 101,
+      "code": "total_duration",
+      "name_zh": "专注时长",
+      "type": "enum",
+      "mode": "rw",
+      "range": ["min_15", "min_30", "min_45", "min_60", "min_90"],
+      "value_minutes": [15, 30, 45, 60, 90],
+      "remark_zh": "用户选择的专注总时长。枚举对应15、30、45、60、90分钟。与DP102组成合法配置：15→1/3/5块；30→1/3/5/6块；45→1/3/5/9块；60→1/3/5/6块；90→1/3/5/6/9块。每块分钟数=总时长÷图块数量。面板必须成组下发101、102；设备仅接受合法组合，接受后清零DP103、将DP104置为idle并回报结果。"
+    },
+    {
+      "id": 102,
+      "code": "piece_count",
+      "name_zh": "图块数量",
+      "type": "enum",
+      "mode": "rw",
+      "range": ["piece_1", "piece_3", "piece_5", "piece_6", "piece_9"],
+      "value_pieces": [1, 3, 5, 6, 9],
+      "remark_zh": "用户选择的图块总数。枚举对应1、3、5、6、9块，可选值由DP101决定。面板必须隐藏或禁用非法选项，用户不能设置时间步长。切换时长后，若原块数非法，默认选择新时长允许的最大块数；DP101、DP102必须成组下发，并以设备回报值作为最终设置结果。"
+    },
+    {
+      "id": 103,
+      "code": "current_piece",
+      "name_zh": "已消除图块数",
+      "type": "value",
+      "mode": "ro",
+      "min": 0,
+      "max": 9,
+      "step": 1,
+      "scale": 0,
+      "unit": "块",
+      "remark_zh": "设备当前已经消除的图块数量。开始新任务或修改101、102时清零；每达到一个图块时间节点增加1；完成时等于DP102对应的图块总数。仅在数值发生变化、配置重置及设备重新上线同步状态时上报，面板不得下发。"
+    },
+    {
+      "id": 104,
+      "code": "timer_status",
+      "name_zh": "专注状态",
+      "type": "enum",
+      "mode": "rw",
+      "range": ["idle", "running", "completed"],
+      "range_zh": ["待机/暂停", "进行中", "已完成"],
+      "remark_zh": "专注任务状态。idle表示待开始或暂停，running表示正在计时，completed表示全部图块已消除。面板只能下发idle和running；running切换到idle时暂停并保留进度，再次下发running时继续。completed只能由设备上报；完成后再次下发running时，设备清零进度并开始新任务。"
+    },
+    {
+      "id": 105,
+      "code": "theme",
+      "name_zh": "显示主题",
+      "type": "enum",
+      "mode": "rw",
+      "range": ["pizza", "stars", "miku", "custom"],
+      "range_zh": ["披萨", "星空", "初音", "自定义"],
+      "remark_zh": "显示主题：pizza披萨、stars星空、miku初音、custom自定义。内置主题可直接下发。自定义入口在上传状态为idle、ready或error时均可点击；idle/error进入选图上传，ready可直接使用或更换图片。只有DP107=ready时才能下发custom。上传完成后设备上报DP107=ready、DP108=100及DP105=custom。"
+    },
+    {
+      "id": 106,
+      "code": "custom_image",
+      "name_zh": "自定义图片数据",
+      "type": "raw",
+      "mode": "wr",
+      "max_length": 128,
+      "remark_zh": "400×400六色4-bit帧数据，固定80000字节。像素逐行、从左到右；每字节2像素，高4位为左像素，低4位为右像素；色码：0黑、1白、2黄、3红、5蓝、6绿。每包最多128字节：EPZ1(4字节)+offset(uint32小端)+total(uint32小端，固定80000)+载荷。前689包载荷116字节，末包76字节，共690包，offset必须连续递增。"
+    },
+    {
+      "id": 107,
+      "code": "image_upload_status",
+      "name_zh": "自定义图片上传状态",
+      "type": "enum",
+      "mode": "ro",
+      "range": ["idle", "receiving", "ready", "error"],
+      "range_zh": ["未上传", "接收中", "已就绪", "错误"],
+      "remark_zh": "自定义图片接收状态。idle：没有可用图片；receiving：正在接收，禁止重复上传、开始专注或切换到custom；ready：已完整接收80000字节，可以使用custom；error：协议头、长度、offset顺序错误或接收超时。收到offset=0时旧图失效并开始新上传；receiving状态超过30秒未收到合法下一包时进入error，重传必须从offset=0开始。"
+    },
+    {
+      "id": 108,
+      "code": "image_upload_progress",
+      "name_zh": "图片上传进度",
+      "type": "value",
+      "mode": "ro",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "scale": 0,
+      "unit": "%",
+      "remark_zh": "设备实际接收进度。收到合法的offset=0首包时上报0；每成功接收一个offset连续的数据包后计算累计进度，仅在跨越下一个5%节点时上报0、5、10……100。重复包不增加进度；协议头、长度或offset错误时进入error。完整接收80000字节后强制上报100；新上传重新从0开始。"
+    }
+  ],
+  "constraints": {
+    "duration_piece_matrix": {
+      "min_15": ["piece_1", "piece_3", "piece_5"],
+      "min_30": ["piece_1", "piece_3", "piece_5", "piece_6"],
+      "min_45": ["piece_1", "piece_3", "piece_5", "piece_9"],
+      "min_60": ["piece_1", "piece_3", "piece_5", "piece_6"],
+      "min_90": ["piece_1", "piece_3", "piece_5", "piece_6", "piece_9"]
+    },
+    "configuration_downlink": "DP101 and DP102 must be sent together in one object-DP message. A valid update resets DP103 to 0 and DP104 to idle.",
+    "piece_duration_formula": "piece_duration_minutes = total_duration_minutes / piece_count",
+    "image_frame": {
+      "width": 400,
+      "height": 400,
+      "bytes": 80000,
+      "pixel_format": "4-bit indexed color, row-major, high nibble is left/even-x pixel, low nibble is right/odd-x pixel",
+      "palette": {"0": "black", "1": "white", "2": "yellow", "3": "red", "5": "blue", "6": "green"},
+      "packet_magic": "EPZ1",
+      "header_bytes": 12,
+      "packet_max_bytes": 128,
+      "payload_bytes": 116,
+      "packet_count": 690,
+      "last_payload_bytes": 76,
+      "timeout_seconds": 30
+    }
+  }
+}

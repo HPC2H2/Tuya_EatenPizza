@@ -34,7 +34,7 @@
 
 // Display resolution
 #define EPD_1IN69_E6_WIDTH  400
-#define EPD_1IN69_E6_HEIGHT 200
+#define EPD_1IN69_E6_HEIGHT 400
 
 // Mode definitions
 #define MASTER_ONLY  0
@@ -42,12 +42,12 @@
 #define MASTER_SLAVE 2
 
 // Color definitions
-#define WHITE  0x11
-#define BLACK  0x00
-#define RED    0x33
-#define YELLOW 0x22
-#define BLUE   0x55
-#define GREEN  0x66
+#define EPD_COLOR_WHITE  0x11
+#define EPD_COLOR_BLACK  0x00
+#define EPD_COLOR_RED    0x33
+#define EPD_COLOR_YELLOW 0x22
+#define EPD_COLOR_BLUE   0x55
+#define EPD_COLOR_GREEN  0x66
 
 // Display mode
 #define PIC_HALF 0xFC // 半张图片
