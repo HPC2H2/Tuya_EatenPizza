@@ -62,6 +62,9 @@ importers:
       core-js:
         specifier: 3.29.1
         version: 3.29.1
+      eslint:
+        specifier: 7.14.0
+        version: 7.14.0(supports-color@6.1.0)
       eslint-config-tuya-panel:
         specifier: 0.4.1
         version: 0.4.1(supports-color@6.1.0)
@@ -71,6 +74,9 @@ importers:
       lint-staged:
         specifier: 10.2.11
         version: 10.2.11(supports-color@6.1.0)
+      prettier:
+        specifier: 2.2.0
+        version: 2.2.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
